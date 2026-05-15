@@ -3,7 +3,11 @@
     "allow": [
       "Bash(flutter create *)",
       "Bash(flutter pub *)",
-      "Bash(flutter analyze *)"
+      "Bash(flutter analyze *)",
+      "WebFetch(domain:www.p2pquake.net)",
+      "WebFetch(domain:api.p2pquake.net)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }

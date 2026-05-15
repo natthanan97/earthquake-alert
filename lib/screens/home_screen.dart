@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/earthquake_provider.dart';
+import '../widgets/connection_status_badge.dart';
 import '../widgets/earthquake_card.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -14,6 +15,7 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Earthquake Alerts'),
         actions: [
+          const ConnectionStatusBadge(),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => ref.invalidate(earthquakesProvider),
