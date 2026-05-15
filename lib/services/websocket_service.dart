@@ -25,6 +25,8 @@ class WebSocketService {
     _connect();
   }
 
+  int _reconnectCount = 0;
+
   void _connect() {
     if (_disposed) return;
 
@@ -38,55 +40,85 @@ class WebSocketService {
         cancelOnError: false,
       );
 
-      // ready fires once the handshake completes
       _channel!.ready.then((_) {
+        _reconnectCount = 0;
         _emit(ConnectionStatus.connected);
+        log('━━━ CONNECTED ━━━  $_uri', name: 'WS');
       }).catchError((Object e) {
-        log('WebSocket ready error: $e', name: 'WebSocketService');
+        log('━━━ HANDSHAKE ERROR ━━━  $e', name: 'WS');
         _emit(ConnectionStatus.disconnected);
         _scheduleReconnect();
       });
     } catch (e) {
-      log('WebSocket connect error: $e', name: 'WebSocketService');
+      log('━━━ CONNECT ERROR ━━━  $e', name: 'WS');
       _emit(ConnectionStatus.disconnected);
       _scheduleReconnect();
     }
   }
 
   void _onMessage(dynamic raw) {
-    // ignore: avoid_print
-    print('RAW EVENT: $raw');
-
     try {
       final data = jsonDecode(raw as String) as Map<String, dynamic>;
+      _logEvent(data);
 
       if ((data['code'] as int?) != 551) return;
 
       final eq = Earthquake.fromJson(data);
 
-      // skip events with no valid hypocenter
       if (eq.latitude == -200 || eq.longitude == -200) return;
 
       _controller.add(eq);
     } catch (e) {
-      log('WebSocket parse error: $e', name: 'WebSocketService');
+      log('PARSE ERROR  $e\n  raw: $raw', name: 'WS');
     }
   }
 
+  void _logEvent(Map<String, dynamic> data) {
+    final code = data['code'];
+    final time = data['time'] ?? data['created_at'] ?? '—';
+
+    // Fields only present on code 551 (earthquake reports).
+    final eq = data['earthquake'] as Map<String, dynamic>?;
+    final hypo = eq?['hypocenter'] as Map<String, dynamic>?;
+    final location = hypo?['name'] ?? '—';
+    final mag = hypo?['magnitude'];
+    final maxScale = eq?['maxScale'];
+
+    final magStr = mag != null ? 'M${(mag as num).toStringAsFixed(1)}' : 'M—';
+    final scaleStr = _scaleLabel(maxScale is int ? maxScale : -1);
+
+    log(
+      '┌─ code=$code  time=$time\n'
+      '│  location=$location  $magStr  scale=$scaleStr',
+      name: 'WS',
+    );
+  }
+
+  String _scaleLabel(int scale) {
+    const labels = {
+      10: '1', 20: '2', 30: '3', 40: '4', 45: '4強',
+      50: '5弱', 55: '5強', 60: '6弱', 65: '6強', 70: '7',
+    };
+    return scale == -1 ? '—' : (labels[scale] ?? '$scale');
+  }
+
   void _onError(Object error) {
-    log('WebSocket error: $error', name: 'WebSocketService');
+    log('━━━ ERROR ━━━  $error', name: 'WS');
     _emit(ConnectionStatus.reconnecting);
     _scheduleReconnect();
   }
 
   void _onDone() {
-    log('WebSocket closed — reconnecting...', name: 'WebSocketService');
+    log('━━━ DISCONNECTED ━━━', name: 'WS');
     _emit(ConnectionStatus.reconnecting);
     _scheduleReconnect();
   }
 
   void _scheduleReconnect() {
     if (_disposed) return;
+    _reconnectCount++;
+    log('━━━ RECONNECT #$_reconnectCount in ${_reconnectDelay.inSeconds}s ━━━',
+        name: 'WS');
     Future.delayed(_reconnectDelay, _connect);
   }
 

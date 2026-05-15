@@ -7,7 +7,9 @@
       "WebFetch(domain:www.p2pquake.net)",
       "WebFetch(domain:api.p2pquake.net)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(find ~/.pub-cache/hosted -path \"*/flutter_map-7.0.2/lib*\" -name \"*.dart\" | head -20)",
+      "Read(//Users/tang/.pub-cache/hosted/**)"
     ]
   }
 }

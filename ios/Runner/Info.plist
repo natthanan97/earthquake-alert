@@ -47,6 +47,12 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Earthquake Alert uses your location to calculate how close you are to nearby earthquakes and send proximity alerts.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Earthquake Alert uses your location in the background to alert you immediately when an earthquake occurs near you, even while the app is not open.</string>
+	<key>NSUserNotificationUsageDescription</key>
+	<string>Earthquake Alert sends notifications to warn you when a significant earthquake is detected near your location.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
