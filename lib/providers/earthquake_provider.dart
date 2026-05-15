@@ -20,3 +20,21 @@ final webSocketServiceProvider = Provider<WebSocketService>((ref) {
 final connectionStatusProvider = StreamProvider<ConnectionStatus>((ref) {
   return ref.watch(webSocketServiceProvider).statusStream;
 });
+
+// Accumulates realtime events; newest first, capped at 50.
+final realtimeEarthquakesProvider =
+    NotifierProvider<RealtimeEarthquakesNotifier, List<Earthquake>>(
+  RealtimeEarthquakesNotifier.new,
+);
+
+class RealtimeEarthquakesNotifier extends Notifier<List<Earthquake>> {
+  @override
+  List<Earthquake> build() {
+    final service = ref.watch(webSocketServiceProvider);
+    final sub = service.earthquakeStream.listen((eq) {
+      state = [eq, ...state].take(50).toList();
+    });
+    ref.onDispose(sub.cancel);
+    return [];
+  }
+}

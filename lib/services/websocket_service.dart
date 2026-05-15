@@ -54,6 +54,9 @@ class WebSocketService {
   }
 
   void _onMessage(dynamic raw) {
+    // ignore: avoid_print
+    print('RAW EVENT: $raw');
+
     try {
       final data = jsonDecode(raw as String) as Map<String, dynamic>;
 
