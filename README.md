@@ -1,4 +1,4 @@
-# Earthquake Alert
+# QuakeWatch
 
 แอปมือถือ Cross-platform สำหรับติดตามแผ่นดินไหวแบบ Real-time พร้อมระบบแจ้งเตือนตามตำแหน่งที่อยู่ปัจจุบัน สร้างด้วย Flutter + Riverpod
 
@@ -212,7 +212,7 @@ flutter pub get
 # Run code generation (Riverpod)
 dart run build_runner build
 
-# Run app
+# Run app (debug)
 flutter run
 ```
 
@@ -223,9 +223,86 @@ flutter run
 
 ---
 
+## Build
+
+### Android — APK
+
+```bash
+# Debug (ทดสอบบนเครื่อง)
+flutter build apk --debug
+
+# Release — ไฟล์เดียว (ทุก architecture รวมกัน)
+flutter build apk --release
+
+# Release — แยกตาม CPU architecture (ไฟล์เล็กกว่า แนะนำ)
+flutter build apk --release --split-per-abi
+```
+
+ไฟล์ output อยู่ที่ `build/app/outputs/flutter-apk/`
+
+| ไฟล์ | ใช้กับ |
+|---|---|
+| `app-arm64-v8a-release.apk` | มือถือ Android ทั่วไป (แนะนำ) |
+| `app-armeabi-v7a-release.apk` | มือถือ Android รุ่นเก่า |
+| `app-x86_64-release.apk` | Android Emulator บน PC |
+
+### Android — AAB (สำหรับ Play Store)
+
+```bash
+flutter build appbundle --release
+# output: build/app/outputs/bundle/release/app-release.aab
+```
+
+### iOS (ต้องใช้ Mac + Xcode)
+
+```bash
+flutter build ipa --release
+# output: build/ios/ipa/QuakeWatch.ipa
+```
+
+---
+
+## วิธีขึ้น Store
+
+### Google Play Store
+
+1. สร้าง Keystore (ทำครั้งเดียว)
+```bash
+keytool -genkey -v -keystore ~/quakewatch.keystore \
+  -alias quakewatch -keyalg RSA -keysize 2048 -validity 10000
+```
+
+2. Config signing ใน `android/app/build.gradle.kts`
+```kotlin
+signingConfigs {
+    create("release") {
+        keyAlias = "quakewatch"
+        keyPassword = "YOUR_KEY_PASSWORD"
+        storeFile = file("/path/to/quakewatch.keystore")
+        storePassword = "YOUR_STORE_PASSWORD"
+    }
+}
+```
+
+3. Build AAB และ upload ที่ [play.google.com/console](https://play.google.com/console)
+   - ค่าสมัคร **$25 (ครั้งเดียว)**
+   - Review ประมาณ **1–3 วัน**
+
+### Apple App Store
+
+1. สมัคร Apple Developer ที่ [developer.apple.com](https://developer.apple.com)
+   - ค่าสมาชิก **$99/ปี**
+2. ตั้ง Bundle ID และ Team ใน Xcode
+3. Build IPA และ upload ที่ [appstoreconnect.apple.com](https://appstoreconnect.apple.com)
+   - Review ประมาณ **1–2 วัน**
+
+> **หมายเหตุ:** ทั้งสอง Store บังคับให้มี **Privacy Policy URL** เพราะ app ใช้ GPS
+
+---
+
 ## App Info
 
-- **App Name**: earthquake_alert
+- **App Name**: QuakeWatch
 - **Version**: 1.0.0+1
 - **Dart SDK**: >=3.11.5
 - **Flutter**: >=3.0.0
