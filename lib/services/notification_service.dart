@@ -4,7 +4,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
   static const _channelId = 'quake_alerts';
-  static const _channelName = 'Earthquake Alerts';
+  static const _channelName = 'QuakeWatch Alerts';
   static const _channelDesc = 'High-priority alerts for nearby earthquake events';
 
   static const _androidDetails = AndroidNotificationDetails(

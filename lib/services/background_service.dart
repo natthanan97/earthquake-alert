@@ -97,7 +97,7 @@ class BackgroundMonitoringService {
   static Future<ServiceRequestResult> start() {
     return FlutterForegroundTask.startService(
       serviceId: 1001,
-      notificationTitle: 'Earthquake Alert',
+      notificationTitle: 'QuakeWatch',
       notificationText: 'Monitoring for earthquakes…',
       callback: startCallback,
     );

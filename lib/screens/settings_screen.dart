@@ -193,6 +193,69 @@ class SettingsScreen extends ConsumerWidget {
 
             const SizedBox(height: 24),
 
+            // ── Appearance ────────────────────────────────────────────────
+            _SectionHeader(label: 'APPEARANCE', cs: cs, theme: theme),
+            const SizedBox(height: 8),
+            _SettingsCard(
+              cs: cs,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.palette_outlined, size: 18, color: cs.primary),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Theme',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _ThemeOption(
+                        icon: Icons.brightness_auto,
+                        label: 'System',
+                        selected: settings.themeMode == ThemeMode.system,
+                        cs: cs,
+                        theme: theme,
+                        onTap: () => ref
+                            .read(settingsProvider.notifier)
+                            .setThemeMode(ThemeMode.system),
+                      ),
+                      const SizedBox(width: 8),
+                      _ThemeOption(
+                        icon: Icons.light_mode,
+                        label: 'Light',
+                        selected: settings.themeMode == ThemeMode.light,
+                        cs: cs,
+                        theme: theme,
+                        onTap: () => ref
+                            .read(settingsProvider.notifier)
+                            .setThemeMode(ThemeMode.light),
+                      ),
+                      const SizedBox(width: 8),
+                      _ThemeOption(
+                        icon: Icons.dark_mode,
+                        label: 'Dark',
+                        selected: settings.themeMode == ThemeMode.dark,
+                        cs: cs,
+                        theme: theme,
+                        onTap: () => ref
+                            .read(settingsProvider.notifier)
+                            .setThemeMode(ThemeMode.dark),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
             // ── Offline Cache ─────────────────────────────────────────────
             _SectionHeader(label: 'OFFLINE CACHE', cs: cs, theme: theme),
             const SizedBox(height: 8),
@@ -322,6 +385,67 @@ class _SettingsCard extends StatelessWidget {
         border: Border.all(color: cs.outlineVariant.withValues(alpha: 0.3)),
       ),
       child: child,
+    );
+  }
+}
+
+class _ThemeOption extends StatelessWidget {
+  const _ThemeOption({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.cs,
+    required this.theme,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final ColorScheme cs;
+  final ThemeData theme;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: selected
+                ? cs.primaryContainer
+                : cs.surfaceContainer,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected
+                  ? cs.primary
+                  : cs.outlineVariant.withValues(alpha: 0.4),
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                icon,
+                size: 22,
+                color: selected ? cs.primary : cs.onSurfaceVariant,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: selected ? cs.primary : cs.onSurfaceVariant,
+                  fontWeight:
+                      selected ? FontWeight.w700 : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -3,17 +3,18 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'providers/earthquake_provider.dart';
+import 'providers/settings_provider.dart';
 import 'screens/earthquake_feed_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/splash_screen.dart';
 import 'services/background_service.dart';
 import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize foreground task config before any service calls.
   BackgroundMonitoringService.init();
 
   final notifications = NotificationService();
@@ -23,26 +24,55 @@ void main() async {
   runApp(const ProviderScope(child: EarthquakeApp()));
 }
 
-class EarthquakeApp extends StatelessWidget {
+class EarthquakeApp extends ConsumerWidget {
   const EarthquakeApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(
+      settingsProvider.select((s) => s.valueOrNull?.themeMode ?? ThemeMode.dark),
+    );
+
     return MaterialApp(
-      title: 'Earthquake Alert',
+      title: 'QuakeWatch',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepOrange,
+          brightness: Brightness.light,
+        ),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.deepOrange,
           brightness: Brightness.dark,
         ),
         useMaterial3: true,
       ),
-      themeMode: ThemeMode.dark,
-      // WithForegroundTask ensures the service stays alive while the root
-      // widget tree is alive and cleans up when it is destroyed.
-      home: WithForegroundTask(child: const _RootShell()),
+      themeMode: themeMode,
+      home: WithForegroundTask(child: const _AppEntry()),
     );
+  }
+}
+
+// Shows SplashScreen first, then switches to _RootShell.
+class _AppEntry extends StatefulWidget {
+  const _AppEntry();
+
+  @override
+  State<_AppEntry> createState() => _AppEntryState();
+}
+
+class _AppEntryState extends State<_AppEntry> {
+  bool _ready = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_ready) {
+      return SplashScreen(onDone: () => setState(() => _ready = true));
+    }
+    return const _RootShell();
   }
 }
 
@@ -53,7 +83,8 @@ class _RootShell extends ConsumerStatefulWidget {
   ConsumerState<_RootShell> createState() => _RootShellState();
 }
 
-class _RootShellState extends ConsumerState<_RootShell> with WidgetsBindingObserver {
+class _RootShellState extends ConsumerState<_RootShell>
+    with WidgetsBindingObserver {
   int _index = 0;
 
   void _goToMap(double lat, double lon) {
@@ -76,10 +107,11 @@ class _RootShellState extends ConsumerState<_RootShell> with WidgetsBindingObser
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // The foreground service keeps the WebSocket alive when backgrounded.
-    // We start it here if it somehow stopped (e.g. first launch after reboot).
     if (state == AppLifecycleState.resumed) {
       _startBackgroundService();
+      // Invalidate WebSocket provider so a fresh connection is established
+      // after the app is killed and relaunched (fixes freeze/unresponsive UI).
+      ref.invalidate(webSocketServiceProvider);
     }
   }
 

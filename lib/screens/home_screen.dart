@@ -44,7 +44,7 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Earthquake Alerts'),
+        title: const Text('QuakeWatch'),
         centerTitle: false,
         titleTextStyle: theme.textTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.w700,
