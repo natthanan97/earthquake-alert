@@ -15,14 +15,25 @@ class ProximityAlertService {
     /// Optional: supplier of the last known position (e.g. from map stream).
     /// Used to avoid an extra GPS round-trip on each event.
     this.lastKnownPosition,
+    /// Supplier for current alert radius in meters (reads from settings).
+    this.alertRadiusMetersSupplier,
+    /// Supplier for minimum magnitude threshold (reads from settings).
+    this.minMagnitudeSupplier,
     double alertRadiusMeters = DistanceService.defaultAlertRadiusMeters,
-  }) : _alertRadiusMeters = alertRadiusMeters;
+  }) : _defaultRadiusMeters = alertRadiusMeters;
 
   final LocationService locationService;
   final DistanceService distanceService;
   final NotificationService notificationService;
   final LatLng? Function()? lastKnownPosition;
-  final double _alertRadiusMeters;
+  final double Function()? alertRadiusMetersSupplier;
+  final double Function()? minMagnitudeSupplier;
+  final double _defaultRadiusMeters;
+
+  double get _alertRadiusMeters =>
+      alertRadiusMetersSupplier?.call() ?? _defaultRadiusMeters;
+
+  double get _minMagnitude => minMagnitudeSupplier?.call() ?? 4.0;
 
   // Deduplication: stores event keys that already triggered a notification.
   final _alerted = <String>{};
@@ -32,6 +43,14 @@ class ProximityAlertService {
 
     if (_alerted.contains(key)) {
       log('Duplicate skipped: $key', name: 'ProximityAlertService');
+      return;
+    }
+
+    if (earthquake.magnitude < _minMagnitude) {
+      log(
+        'Below min magnitude (${earthquake.magnitude} < $_minMagnitude) — skipped',
+        name: 'ProximityAlertService',
+      );
       return;
     }
 

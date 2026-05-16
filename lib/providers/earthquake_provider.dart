@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import '../models/earthquake.dart';
+import '../services/database_service.dart';
 import '../services/distance_service.dart';
 import '../services/earthquake_service.dart';
 import '../services/historical_earthquake_service.dart';
@@ -10,6 +11,7 @@ import '../services/location_service.dart';
 import '../services/notification_service.dart';
 import '../services/proximity_alert_service.dart';
 import '../services/websocket_service.dart';
+import 'settings_provider.dart';
 
 /// Shared last-known user GPS position.
 /// Written by MapScreen's location stream; read by ProximityAlertService.
@@ -42,12 +44,26 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService();
 });
 
+final databaseServiceProvider = Provider<DatabaseService>((ref) {
+  final svc = DatabaseService();
+  ref.onDispose(svc.dispose);
+  return svc;
+});
+
 final proximityAlertServiceProvider = Provider<ProximityAlertService>((ref) {
   return ProximityAlertService(
     locationService: LocationService(),
     distanceService: DistanceService(),
     notificationService: ref.watch(notificationServiceProvider),
     lastKnownPosition: () => ref.read(userPositionProvider),
+    alertRadiusMetersSupplier: () {
+      final settings = ref.read(settingsProvider).valueOrNull;
+      return (settings?.alertRadiusKm ?? 50.0) * 1000;
+    },
+    minMagnitudeSupplier: () {
+      final settings = ref.read(settingsProvider).valueOrNull;
+      return settings?.minMagnitude ?? 4.0;
+    },
   );
 });
 
@@ -63,13 +79,30 @@ class RealtimeEarthquakesNotifier extends Notifier<List<Earthquake>> {
   List<Earthquake> build() {
     final service = ref.watch(webSocketServiceProvider);
     final alertService = ref.watch(proximityAlertServiceProvider);
+    final db = ref.watch(databaseServiceProvider);
+
+    // Load cached earthquakes from SQLite on startup so the UI is not empty
+    // while waiting for the first WebSocket events.
+    _loadCache(db);
 
     final sub = service.earthquakeStream.listen((eq) {
       state = [eq, ...state].take(50).toList();
       alertService.evaluate(eq);
+      db.insertEarthquakes([eq]);
     });
     ref.onDispose(sub.cancel);
     return [];
+  }
+
+  Future<void> _loadCache(DatabaseService db) async {
+    try {
+      final cached = await db.loadRecent(limit: 50);
+      if (cached.isNotEmpty && state.isEmpty) {
+        state = cached;
+      }
+    } catch (e) {
+      log('Cache load error: $e', name: 'RealtimeEarthquakesNotifier');
+    }
   }
 }
 
@@ -77,12 +110,18 @@ class RealtimeEarthquakesNotifier extends Notifier<List<Earthquake>> {
 
 final historicalEarthquakesProvider =
     FutureProvider<List<Earthquake>>((ref) async {
+  final db = ref.watch(databaseServiceProvider);
   final svc = HistoricalEarthquakeService();
   try {
-    return await svc.fetchLast10Hours();
+    final results = await svc.fetchLast10Hours();
+    if (results.isNotEmpty) {
+      await db.insertEarthquakes(results);
+    }
+    return results;
   } catch (e) {
-    log('Historical fetch failed: $e', name: 'earthquake_provider');
-    return [];
+    log('Historical fetch failed — loading from cache: $e',
+        name: 'earthquake_provider');
+    return db.loadRecent(limit: 200);
   }
 });
 

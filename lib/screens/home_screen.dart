@@ -5,6 +5,7 @@ import '../models/earthquake.dart';
 import '../providers/earthquake_provider.dart';
 import '../services/websocket_service.dart';
 import '../services/distance_service.dart';
+import '../providers/settings_provider.dart';
 import '../widgets/earthquake_history_list.dart';
 import '../widgets/hero_quake_card.dart';
 import '../widgets/nearby_quake_card.dart';
@@ -246,6 +247,7 @@ class _StatsRow extends ConsumerWidget {
     final maxMag = ref.watch(_todayMaxMagProvider);
     final userLatLng = ref.watch(userPositionProvider);
     final earthquakes = ref.watch(realtimeEarthquakesProvider);
+    final settings = ref.watch(settingsProvider).valueOrNull;
 
     double? nearestKm;
     if (userLatLng != null && earthquakes.isNotEmpty) {
@@ -306,7 +308,9 @@ class _StatsRow extends ConsumerWidget {
             StatisticsCard(
               icon: Icons.radar,
               label: 'Alert radius',
-              value: '${(DistanceService.defaultAlertRadiusMeters / 1000).toStringAsFixed(0)} km',
+              value: settings != null
+                  ? '${settings.alertRadiusKm.toStringAsFixed(0)} km'
+                  : '${(DistanceService.defaultAlertRadiusMeters / 1000).toStringAsFixed(0)} km',
             ),
           ],
         ),

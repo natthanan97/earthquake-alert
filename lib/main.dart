@@ -6,6 +6,7 @@ import 'providers/earthquake_provider.dart';
 import 'screens/earthquake_feed_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/map_screen.dart';
+import 'screens/settings_screen.dart';
 import 'services/background_service.dart';
 import 'services/notification_service.dart';
 
@@ -104,6 +105,7 @@ class _RootShellState extends ConsumerState<_RootShell> with WidgetsBindingObser
             child: const EarthquakeFeedScreen(),
           ),
           const MapScreen(),
+          const SettingsScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -124,6 +126,11 @@ class _RootShellState extends ConsumerState<_RootShell> with WidgetsBindingObser
             icon: Icon(Icons.map_outlined),
             selectedIcon: Icon(Icons.map),
             label: 'Map',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),

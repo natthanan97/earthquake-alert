@@ -9,7 +9,8 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(find ~/.pub-cache/hosted -path \"*/flutter_map-7.0.2/lib*\" -name \"*.dart\" | head -20)",
-      "Read(//Users/tang/.pub-cache/hosted/**)"
+      "Read(//Users/tang/.pub-cache/hosted/**)",
+      "Bash(grep -E \"\\\\.\\(json|yaml|yml|env|properties\\)$\")"
     ]
   }
 }
